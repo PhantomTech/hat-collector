@@ -362,7 +362,8 @@ class Snitch(EternalClient):
             final_url = fixed_url.replace('http://', 'https://')
             self.msg(rule.channel,
                      ' '.join((f'\x0303{diff["user"]}\x0315',
-                               f'edited \x0314[[\x0307{diff["page"]}\x0314]]\x0315:',
+                               f'{"created" if diff["new"] == "N" else "edited"} '
+                               f'\x0314[[\x0307{diff["page"]}\x0314]]\x0315:',
                                f'\x0310{diff["summary"]}\x0315',
                                final_url)))
         else:
