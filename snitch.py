@@ -304,14 +304,16 @@ class Snitch(EternalClient):
             self.updateRules(channel, params, ignore=True, remove=True)
         elif action == 'list':
             self.cursor.execute(
-                'SELECT * FROM rules WHERE channel=?', (channel,))
+                'SELECT * FROM rules WHERE channel=? '
+                'ORDER BY wiki, ignore DESC, type', (channel,))
             rules = [Rule(*row) for row in self.cursor.fetchall()]
             [self.msg(user,
                       f'{"IGNORE " if r.ignore else ""}{r.wiki} {r.type} {r.pattern}')
              for r in rules]
         elif action == 'listflood':
             self.cursor.execute(
-                'SELECT * FROM rules WHERE channel=?', (channel,))
+                'SELECT * FROM rules WHERE channel=? '
+                'ORDER BY wiki, ignore DESC, type', (channel,))
             rules = [Rule(*row) for row in self.cursor.fetchall()]
             [self.msg(channel,
                       f'{"IGNORE " if r.ignore else ""}{r.wiki} {r.type} {r.pattern}')
