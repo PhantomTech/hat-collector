@@ -30,7 +30,7 @@ CREATE TABLE channels(
 
 Rule = collections.namedtuple('Rule', 'wiki, type, pattern, channel, ignore')
 
-COLOR_RE = re.compile(r'(?:\x02|\x03(?:\d{1,2}(?:,\d{1,2})?)?)')
+COLOR_RE = re.compile(r'\x02|\x03(?:\d{1,2}(?:,\d{1,2})?)?')
 
 CHANNEL_URLS = {'wikidata.wikipedia': 'www.wikidata',
                 'mediawiki.wikipedia': 'www.mediawiki',
@@ -42,23 +42,26 @@ CHANNEL_URLS = {'wikidata.wikipedia': 'www.wikidata',
                 'wikimediafoundation.org': 'wikimediafoundation',
                 }
 
+
 def strip_formatting(message):
     """Strips colors and formatting from IRC messages"""
     return COLOR_RE.sub('', message)
 
-ACTION_RE = re.compile(r'\[\[(.+)\]\] (?P<log>.+)  \* (?P<user>.+) \*  (?P<summary>.+)')
+
+ACTION_RE = re.compile(r'\[\[(.+)]] (?P<log>.+) {2}\* (?P<user>.+) \* {2}(?P<summary>.+)')
 
 DIFF_RE = re.compile(r'''
-    \[\[(?P<page>.*)\]\]\        # page title
+    \[\[(?P<page>.*)]]\          # page title
     (?P<patrolled>!|)            # patrolled
     (?P<new>N|)                  # new page
     (?P<minor>M|)                # minor edit
     (?P<bot>B|)\                 # bot edit
     (?P<url>.*)\                 # diff url
     \*\ (?P<user>.*?)\ \*\       # user
-    \((?P<diff>(\+|-)\d*)\)\     # diff size
+    \((?P<diff>[+-]\d*)\)\       # diff size
     ?(?P<summary>.*)             # edit summary
 ''', re.VERBOSE)
+
 
 class EternalClient(irc.IRCClient):
 
@@ -74,17 +77,21 @@ class EternalClient(irc.IRCClient):
         self.pingger.stop()
 
     def pingServer(self):
-        self.sendLine('PING %s' % self.transport.connector.host)
-        log.msg('%s sent ping to %s'
-                % (self.nickname, self.transport.connector.host))
+        self.sendLine(f'PING {self.transport.connector.host}')
+        log.msg(f'{self.nickname} sent ping to {self.transport.connector.host}')
 
     def irc_PONG(self, prefix, params):
-        log.msg('%s received ping from %s'
-                % (self.nickname, params[1]))
+        log.msg(f'{self.nickname} received ping from {params[1]}')
+
 
 class Snatch(EternalClient):
     realname = 'snerk'
-    nickname = '%s' % (settings.nickname)
+    nickname = f'{settings.nickname}'
+
+    def __init__(self):
+        super().__init__()
+        self.cursor = None
+        self.channels = None
 
     def connectionMade(self):
         EternalClient.connectionMade(self)
@@ -96,7 +103,7 @@ class Snatch(EternalClient):
 
     def connectionLost(self, reason):
         EternalClient.connectionLost(self, reason)
-        log.msg('Snatch disconnected: %s' % reason.value)
+        log.msg(f'Snatch disconnected: {reason.value}')
         self.factory.snatches.remove(self)
         self.cursor.close()
 
@@ -104,11 +111,11 @@ class Snatch(EternalClient):
         self.syncChannels()
 
     def joined(self, channel):
-        log.msg('Snatch joined %s' % channel)
+        log.msg(f'Snatch joined {channel}')
         self.channels.add(channel)
 
     def left(self, channel):
-        log.msg('Snatch left %s' % channel)
+        log.msg(f'Snatch left {channel}')
         self.channels.discard(channel)
 
     def privmsg(self, user, channel, message):
@@ -118,7 +125,7 @@ class Snatch(EternalClient):
         action_match = ACTION_RE.match(cleaned_message)
         match = edit_match or action_match
         if not match:
-            log.msg('%s was not matched' % repr(cleaned_message))
+            log.msg(f'{repr(cleaned_message)} was not matched')
             return
         diff = match.groupdict()
         self.cursor.execute(
@@ -129,7 +136,7 @@ class Snatch(EternalClient):
         for rule in rule_list:
             if rule.channel in ignore:
                 continue
-            pattern = re.compile(r'^%s$' % rule.pattern, re.I | re.U)
+            pattern = re.compile(fr'^{rule.pattern}$', re.I | re.U)
             if rule.type == 'all':
                 pass
             elif rule.type == 'summary':
@@ -166,7 +173,7 @@ class Snatch(EternalClient):
         log.msg('Syncing snatch\'s channels')
         self.cursor.execute(
             'SELECT wiki FROM rules')
-        channels = set('#%s' % row[0] for row in self.cursor.fetchall())
+        channels = set(f'#{row[0]}' for row in self.cursor.fetchall())
         [self.join(channel) for channel in (channels - self.channels)]
         [self.part(channel) for channel in (self.channels - channels)]
 
@@ -175,11 +182,17 @@ class Snatch(EternalClient):
         self.factory.stopTrying()
         self.transport.loseConnection()
 
+
 class Snitch(EternalClient):
     realname = 'snitchbot'
-    nickname = '%s' % (settings.nickname)
-    password = ':%s %s' % (nickname, settings.nickserv_password)
+    nickname = str(settings.nickname)
+    password = f':{nickname} {settings.nickserv_password}'
     lineRate = 1
+
+    def __init__(self):
+        super().__init__()
+        self.cursor = None
+        self.channels = None
 
     def connectionMade(self):
         EternalClient.connectionMade(self)
@@ -191,7 +204,7 @@ class Snitch(EternalClient):
 
     def connectionLost(self, reason):
         EternalClient.connectionLost(self, reason)
-        log.msg('Snitch disconnected: %s' % reason.value)
+        log.msg(f'Snitch disconnected: {reason.value}')
         self.factory.snitches.remove(self)
         self.cursor.close()
 
@@ -203,11 +216,11 @@ class Snitch(EternalClient):
             self.join(row[0])
 
     def joined(self, channel):
-        log.msg('Snitch joined: %s' % channel)
+        log.msg(f'Snitch joined: {channel}')
         self.channels.add(channel)
 
     def left(self, channel):
-        log.msg('Snitch left %s' % channel)
+        log.msg(f'Snitch left {channel}')
         self.channels.discard(channel)
 
     def updateRules(self, channel, params, ignore=False, remove=False):
@@ -293,14 +306,16 @@ class Snitch(EternalClient):
             self.cursor.execute(
                 'SELECT * FROM rules WHERE channel=?', (channel,))
             rules = [Rule(*row) for row in self.cursor.fetchall()]
-            [self.msg(user, '%s%s %s %s' % ('IGNORE ' if r.ignore else '', r.wiki, r.type, r.pattern))
-                for r in rules]
+            [self.msg(user,
+                      f'{"IGNORE " if r.ignore else ""}{r.wiki} {r.type} {r.pattern}')
+             for r in rules]
         elif action == 'listflood':
             self.cursor.execute(
                 'SELECT * FROM rules WHERE channel=?', (channel,))
             rules = [Rule(*row) for row in self.cursor.fetchall()]
-            [self.msg(channel, '%s%s %s %s' % ('IGNORE ' if r.ignore else '', r.wiki, r.type, r.pattern))
-                for r in rules]
+            [self.msg(channel,
+                      f'{"IGNORE " if r.ignore else ""}{r.wiki} {r.type} {r.pattern}')
+             for r in rules]
         elif action == 'join':
             if hostmask not in settings.authorized_users:
                 self.msg(channel, 'You are not authorized to do this.')
@@ -329,10 +344,10 @@ class Snitch(EternalClient):
             if hostmask in settings.authorized_users:
                 self.sendLine(message)
 
-        def quit(self):
-            irc.IRCClient.quit(self)
-            self.factory.stopTrying()
-            self.transport.loseConnection()
+    def quit(self):
+        irc.IRCClient.quit(self)
+        self.factory.stopTrying()
+        self.transport.loseConnection()
 
     def tattle(self, rule, diff):
         if rule.channel not in self.channels:
@@ -342,23 +357,23 @@ class Snitch(EternalClient):
                 diff['summary'] = '[none]'
             url = urlparse(diff['url'])
             fixed_netloc = CHANNEL_URLS.get(url.netloc.strip('.org'),
-                                            url.netloc.strip('.org'))+'.org'
+                                            url.netloc.strip('.org')) + '.org'
             fixed_url = diff['url'].replace(url.netloc, fixed_netloc)
             final_url = fixed_url.replace('http://', 'https://')
             self.msg(rule.channel,
-                     ' '.join(('\x0303%s\x0315' % diff['user'],
-                     			'edited \x0314[[\x0307%s\x0314]]\x0315:' % diff['page'],
-                                '\x0310%s\x0315' % diff['summary'],
-                                final_url)))
+                     ' '.join((f'\x0303{diff["user"]}\x0315',
+                               f'edited \x0314[[\x0307{diff["page"]}\x0314]]\x0315:',
+                               f'\x0310{diff["summary"]}\x0315',
+                               final_url)))
         else:
             base_url = CHANNEL_URLS.get(rule.wiki.strip('.org'),
                                         rule.wiki.strip('.org'))
             self.msg(rule.channel,
-                     '%s %s; https://%s.org/wiki/Special:Log/%s'
-                     % (diff['user'], diff['summary'], base_url, diff['log']))
+                     f'{diff["user"]} {diff["summary"]}; '
+                     f'https://{base_url}.org/wiki/Special:Log/{diff["log"]}')
+
 
 class SnatchAndSnitch(protocol.ReconnectingClientFactory):
-
     factories = 0
     snatches = []
     snitches = []
@@ -379,6 +394,7 @@ class SnatchAndSnitch(protocol.ReconnectingClientFactory):
             cls.connection.close()
             reactor.stop()
 
+
 def main():
     log.startLogging(open(settings.directory + 'snitch.log', 'w'))
     snatch = SnatchAndSnitch()
@@ -388,6 +404,7 @@ def main():
     reactor.connectTCP(settings.snatch_network, 6667, snatch)
     reactor.connectTCP(settings.snitch_network, 6667, snitch)
     reactor.run()
+
 
 if __name__ == '__main__':
     main()
