@@ -16,6 +16,7 @@ on:
       - '.github/workflows/pylint.yml'
 jobs:
   build:
+    name: Pylint
     runs-on: ubuntu-latest
     strategy:
       matrix:
