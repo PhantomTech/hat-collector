@@ -1,3 +1,3 @@
-pydle==0.9.4
+pydle==1.0.0
 pure-sasl~=0.6.2
 aiosseclient~=0.0.1
