@@ -442,7 +442,7 @@ class ReportBot(BotClient):
         # Begin rule matching
         ignore = set()
         for rule in rule_list:
-            if rule.wiki != wiki:
+            if rule.wiki not in (wiki, 'global'):
                 continue
             if rule.channel in ignore:
                 continue
@@ -485,7 +485,7 @@ class ReportBot(BotClient):
             ignore.add(rule.channel)
             # If the rule is not an ignore rule, relay the event
             if not rule.ignore:
-                await self.relay_message(rule.channel, rule.wiki, diff)
+                await self.relay_message(rule.channel, wiki, diff)
 
     async def message(self, target, message):
         """ Message channel or user.
