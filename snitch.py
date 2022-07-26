@@ -442,7 +442,7 @@ class ReportBot(BotClient):
         # Begin rule matching
         ignore = set()
         for rule in rule_list:
-            if rule.wiki != wiki and rule.wiki != 'global':
+            if rule.wiki not in (wiki, 'global'):
                 continue
             if rule.channel in ignore:
                 continue
