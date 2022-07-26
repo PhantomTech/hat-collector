@@ -20,7 +20,6 @@ import settings
 
 ABUSE_LOG_REGEX = re.compile(r'\(\[\[Special:AbuseLog/(\d+)\|details]]\)')
 CHANNEL_URLS: Dict[str, str] = {
-    'wikidata.wikipedia': 'www.wikidata',
     'mediawiki.wikipedia': 'www.mediawiki',
     'species.wikipedia': 'species.wikimedia',
     'donate.wikimedia.org': 'donate.wikimedia',
@@ -28,6 +27,11 @@ CHANNEL_URLS: Dict[str, str] = {
     'wikimania2013wiki': 'wikimania2013.wikimedia',
     'wikimania2014wiki': 'wikimania2014.wikimedia',
     'wikimediafoundation.org': 'wikimediafoundation',
+}
+# Wiki aliases for compatibility
+WIKI_ALIAS: Dict[str, str] = {
+    'wikidata.wikipedia': 'www.wikidata',
+    'testwikidata.wikipedia': 'test.wikidata',
 }
 AUTHORIZED_RE = re.compile(fr'{"|".join(settings.AUTHORIZED_USERS)}')
 TRUSTED_RE = re.compile(fr'{"|".join(settings.TRUSTED_USERS)}')
@@ -84,7 +88,11 @@ class ReportBot(BotClient):
         """
         logging.info('Syncing rules')
         query = 'SELECT wiki, type, pattern, channel, ignore FROM rules ORDER BY ignore DESC'
-        self.rule_list = [Rule(*row) for row in self.query(query)]
+        self.rule_list = []
+        for row in self.query(query):
+            if row[0] in WIKI_ALIAS:
+                row = (WIKI_ALIAS[row[0]], *row[1:])
+            self.rule_list.append(Rule(*row))
 
     async def on_connect(self) -> None:
         """ Called when bot connects to irc server
