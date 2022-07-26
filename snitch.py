@@ -220,7 +220,7 @@ class ReportBot(BotClient):
                 message = f'\x0303{diff["user"]}\x0315 ' \
                           f'{diff["log"]} ' \
                           f'\x0310{diff["summary"]}\x0315{"..." if summary_shortened else ""} ' \
-                          f'https://{base_url}.org/wiki/Special:Log/{diff["log"]}'
+                          f'https://{base_url}.org/wiki/Special:Redirect/logid/{diff["logid"]}'
 
             if len(message) > max_len:
                 if len(message) - len(diff['summary']) + 3 < max_len:
@@ -423,6 +423,7 @@ class ReportBot(BotClient):
         if data['type'] == 'log':
             diff.update({
                 'log': data['log_type'],
+                'logid': data['log_id'],
                 'summary': (data['log_action_comment']
                             if data['log_action_comment'] != 'reviewed'
                             else 'pagetriage-curation')
