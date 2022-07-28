@@ -406,7 +406,7 @@ class ReportBot(BotClient):
 
         :param data: data fom the event stream
         """
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-statements
         if data['$schema'] != '/mediawiki/recentchange/1.0.0':
             logging.error('Unhandled schema')
 
