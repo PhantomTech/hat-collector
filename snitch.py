@@ -412,7 +412,7 @@ class ReportBot(BotClient):
 
         wiki = '.'.join(data['server_name'].split('.')[:-1])
         if data['type'] not in ('edit', 'new', 'log'):
-            if data['type'] not in ('categorize',):
+            if data['type'] not in ('categorize', '142'): # '142' is for Flow edits
                 logging.info(f'Unknown type {data["type"]}')
             return
         diff = {
