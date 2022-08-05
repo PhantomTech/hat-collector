@@ -447,7 +447,7 @@ class ReportBot(BotClient):
         for rule in rule_list:
             if rule.wiki not in (wiki, 'global'):
                 continue
-            if rule.channel in ignore:
+            if rule.channel in ignore or rule.channel not in self.channel_list:
                 continue
             # Check if rule should be applied
             pattern = re.compile(fr'^{rule.pattern}$', re.I | re.U)
