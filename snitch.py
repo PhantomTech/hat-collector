@@ -10,7 +10,7 @@ import re
 import sqlite3
 import sre_constants
 import time
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set
 from urllib.parse import urlparse
 
 from aiosseclient import aiosseclient
@@ -45,9 +45,9 @@ BotClient = pydle.featurize(
 class ReportBot(BotClient):
     """ IRC bot for relaying events matching defined rules on Wikipedia and related projects
     """
-    rule_list = []
-    channel_list = []  # Bot's list of channels from the database
-    next_message = 0
+    rule_list: List[Rule] = []
+    channel_list: Set[str] = set()  # Bot's list of channels from the database
+    next_message: float = 0
 
     def __init__(self, nickname, *args, sqlite_connection: sqlite3.Connection = None, **kwargs):
         super().__init__(nickname, *args, **kwargs)
