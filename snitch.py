@@ -10,7 +10,7 @@ import re
 import sqlite3
 import sre_constants
 import time
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Set
 from urllib.parse import urlparse
 
 from aiosseclient import aiosseclient
@@ -45,8 +45,9 @@ BotClient = pydle.featurize(
 class ReportBot(BotClient):
     """ IRC bot for relaying events matching defined rules on Wikipedia and related projects
     """
-    rule_list = []
-    next_message = 0
+    rule_list: List[Rule] = []
+    channel_list: Set[str] = set()  # Bot's list of channels from the database
+    next_message: float = 0
 
     def __init__(self, nickname, *args, sqlite_connection: sqlite3.Connection = None, **kwargs):
         super().__init__(nickname, *args, **kwargs)
@@ -73,11 +74,11 @@ class ReportBot(BotClient):
         """
         logging.info('Syncing report channels')
         query = 'SELECT name FROM channels'
-        channels = set(f'{row[0]}' for row in self.query(query))
+        self.channel_list = set(f'{row[0]}' for row in self.query(query))
         # pylint: disable-next=expression-not-assigned
-        [await self.join(channel) for channel in (channels - self.channels.keys())]
+        [await self.join(channel) for channel in (self.channel_list - self.channels.keys())]
         # pylint: disable-next=expression-not-assigned
-        [await self.part(channel) for channel in (self.channels.keys() - channels)]
+        [await self.part(channel) for channel in (self.channels.keys() - self.channel_list)]
 
     def sync_rules(self) -> None:
         """ Syncs list of rules for the bot
@@ -231,7 +232,8 @@ class ReportBot(BotClient):
         if not self.in_channel(channel):
             await asyncio.sleep(2)  # Give bot chance to (re)connect
             if not self.in_channel(channel):
-                logging.error(f'Tried to send a message to a channel bot isn\'t in: {channel}')
+                if channel not in self.channel_list:
+                    logging.error(f'Tried to send a message to a channel bot isn\'t in: {channel}')
                 return
         if 'page' in diff:
             if not diff['summary']:
@@ -347,7 +349,7 @@ class ReportBot(BotClient):
                 else:
                     self.query('INSERT OR IGNORE INTO channels VALUES (:channel)',
                                {'channel': split_message[1]})
-                    await self.join(split_message[1])
+                    await self.sync_channels()
                     await self.message(settings.HOME_CHANNEL,
                                        f"BOT: Joining channel {split_message[1]} "
                                        f"as requested by {sender} in {conversation}")
@@ -358,7 +360,7 @@ class ReportBot(BotClient):
                 else:
                     self.query('DELETE FROM channels WHERE name=:channel',
                                {'channel': split_message[1]})
-                    await self.part(split_message[1])
+                    await self.sync_channels()
                     await self.message(settings.HOME_CHANNEL,
                                        f"BOT: Parting channel {split_message[1]} "
                                        f"as requested by {sender} in {conversation}")
@@ -448,7 +450,7 @@ class ReportBot(BotClient):
         for rule in rule_list:
             if rule.wiki not in (wiki, 'global'):
                 continue
-            if rule.channel in ignore:
+            if rule.channel in ignore or rule.channel not in self.channel_list:
                 continue
             # Check if rule should be applied
             pattern = re.compile(fr'^{rule.pattern}$', re.I | re.U)
