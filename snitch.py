@@ -11,7 +11,6 @@ import sqlite3
 import sre_constants
 import time
 from typing import Dict, Tuple, List
-from urllib.parse import urlparse
 
 from aiosseclient import aiosseclient
 import pydle
@@ -19,8 +18,6 @@ import pydle
 import settings
 
 ABUSE_LOG_REGEX = re.compile(r'\(\[\[Special:AbuseLog/(\d+)\|details]]\)')
-CHANNEL_URLS: Dict[str, str] = {
-}
 # Wiki aliases for compatibility
 WIKI_ALIAS: Dict[str, str] = {
     'wikidata.wikipedia': 'www.wikidata',
@@ -244,15 +241,10 @@ class ReportBot(BotClient):
         if 'page' in diff:
             if not diff['summary']:
                 diff['summary'] = '[no summary]'
-            url = urlparse(diff['url'])
-            fixed_netloc = CHANNEL_URLS.get(url.netloc.strip('.org'),
-                                            url.netloc.strip('.org')) + '.org'
-            fixed_url = diff['url'].replace(url.netloc, fixed_netloc)
-            final_url = fixed_url.replace('http://', 'https://')
+            final_url = diff['url'].replace('http://', 'https://')
             await self.message(channel, build_message())
         else:
-            base_url = CHANNEL_URLS.get(wiki.strip('.org'),
-                                        wiki.strip('.org'))
+            base_url = wiki.strip('.org')
             if diff['log'] == 'abusefilter':
                 filter_log = ABUSE_LOG_REGEX.findall(diff['summary'])
                 if len(filter_log) > 0:
