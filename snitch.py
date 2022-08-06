@@ -20,7 +20,6 @@ import settings
 
 ABUSE_LOG_REGEX = re.compile(r'\(\[\[Special:AbuseLog/(\d+)\|details]]\)')
 CHANNEL_URLS: Dict[str, str] = {
-    'wikimediafoundation.org': 'wikimediafoundation',
 }
 # Wiki aliases for compatibility
 WIKI_ALIAS: Dict[str, str] = {
@@ -32,6 +31,7 @@ WIKI_ALIAS: Dict[str, str] = {
     'outreach.wikipedia': 'outreach.wikimedia',
     'wikimania2013wiki': 'wikimania2013.wikimedia',
     'wikimania2014wiki': 'wikimania2014.wikimedia',
+    'wikimediafoundation.org': 'foundation.wikimedia',
 }
 AUTHORIZED_RE = re.compile(fr'{"|".join(settings.AUTHORIZED_USERS)}')
 TRUSTED_RE = re.compile(fr'{"|".join(settings.TRUSTED_USERS)}')
