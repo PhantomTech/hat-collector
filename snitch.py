@@ -508,16 +508,12 @@ class ReportBot(BotClient):
         """ Handle errors
         """
         await super().on_data_error(exception)
-        # Proper anti-flooding measures are required however this may
-        # need to be done in pydle
-        # pylint: disable-next=fixme
-        # TODO: Implement better rate control (by waiting until pydle does)
-        if 'Excess Flood' in str(exception):
-            logging.error(f'Handling flood disconnection: {exception}')
+        if not self.connected:
             await self.connect(reconnect=True)
-        elif isinstance(exception, ConnectionResetError):
-            logging.error(f'Handling connection reset disconnection: {exception}')
-            await self.connect(reconnect=True)
+        else:
+            raise exception
+        if not self.connected:
+            raise exception
 
     async def monitor_event_stream(self) -> None:
         """ Gets and relays events to the bot
