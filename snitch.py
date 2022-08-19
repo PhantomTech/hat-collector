@@ -350,9 +350,6 @@ class ReportBot(BotClient):
                     self.query('INSERT OR IGNORE INTO channels VALUES (:channel)',
                                {'channel': split_message[1]})
                     await self.sync_channels()
-                    await self.message(settings.HOME_CHANNEL,
-                                       f"BOT: Joining channel {split_message[1]} "
-                                       f"as requested by {sender} in {conversation}")
         elif split_message[0] in ('part', 'leave'):
             if await self.is_authorized(sender, 0):
                 if not len(split_message) > 1:
@@ -361,9 +358,6 @@ class ReportBot(BotClient):
                     self.query('DELETE FROM channels WHERE name=:channel',
                                {'channel': split_message[1]})
                     await self.sync_channels()
-                    await self.message(settings.HOME_CHANNEL,
-                                       f"BOT: Parting channel {split_message[1]} "
-                                       f"as requested by {sender} in {conversation}")
         elif split_message[0] == 'help':
             await self.message(message_target,
                                '!(relay|drop|ignore|unignore|list|listflood|join|part|quit)')
