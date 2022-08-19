@@ -355,8 +355,11 @@ class ReportBot(BotClient):
                 if not len(split_message) > 1:
                     await self.message(conversation, '!part (channel)')
                 else:
-                    self.query('DELETE FROM channels WHERE name=:channel',
-                               {'channel': split_message[1]})
+                    # Databases from versions that don't include commit
+                    # 5035be86d48b0103ba7fb47c75497dab7a893fc5 may have channel
+                    # names that include capitalization
+                    self.query('DELETE FROM channels WHERE lower(name)=:channel',
+                               {'channel': split_message[1].lower()})
                     await self.sync_channels()
         elif split_message[0] == 'help':
             await self.message(message_target,
