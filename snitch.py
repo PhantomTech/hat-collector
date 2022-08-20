@@ -224,7 +224,6 @@ class ReportBot(BotClient):
                           f'https://{base_url}.org/wiki/Special:AbuseLog/{filter_log}'
             else:
                 message = f'\x0303{diff["user"]}\x0315 ' \
-                          f'{diff["log"]} ' \
                           f'\x0310{diff["summary"]}\x0315{"..." if summary_shortened else ""} ' \
                           f'https://{base_url}.org/wiki/Special:Redirect/logid/{diff["logid"]}'
 
