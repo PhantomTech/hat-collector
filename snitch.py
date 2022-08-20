@@ -74,7 +74,7 @@ class ReportBot(BotClient):
         """ Syncs list of channels bot should be in
         """
         logging.info('Syncing report channels')
-        query = 'SELECT name FROM channels'
+        query = 'SELECT lower(name) FROM channels'
         self.channel_list = set(f'{row[0]}' for row in self.query(query))
         # pylint: disable-next=expression-not-assigned
         [await self.join(channel) for channel in (self.channel_list - self.channels.keys())]
@@ -348,15 +348,18 @@ class ReportBot(BotClient):
                     await self.message(conversation, '!join (channel)')
                 else:
                     self.query('INSERT OR IGNORE INTO channels VALUES (:channel)',
-                               {'channel': split_message[1]})
+                               {'channel': split_message[1].lower()})
                     await self.sync_channels()
         elif split_message[0] in ('part', 'leave'):
             if await self.is_authorized(sender, 0):
                 if not len(split_message) > 1:
                     await self.message(conversation, '!part (channel)')
                 else:
-                    self.query('DELETE FROM channels WHERE name=:channel',
-                               {'channel': split_message[1]})
+                    # Databases from versions that don't include commit
+                    # 5035be86d48b0103ba7fb47c75497dab7a893fc5 may have channel
+                    # names that include capitalization
+                    self.query('DELETE FROM channels WHERE lower(name)=:channel',
+                               {'channel': split_message[1].lower()})
                     await self.sync_channels()
         elif split_message[0] == 'help':
             await self.message(message_target,
@@ -370,6 +373,10 @@ class ReportBot(BotClient):
                 await self.message(conversation,
                                    f"Currently in the following channels: "
                                    f"{str(list(self.channels.keys()))}")
+                if settings.DEBUG_MODE:
+                    await self.message(conversation,
+                                       f"(DEBUG) Should be in the following channels: "
+                                       f"{str(self.channel_list)}")
         elif split_message[0] == 'announce':
             if await self.is_authorized(sender, 0):
                 announcement = ' '.join(split_message[1:])
