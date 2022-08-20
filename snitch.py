@@ -374,11 +374,9 @@ class ReportBot(BotClient):
                                    f"Currently in the following channels: "
                                    f"{str(list(self.channels.keys()))}")
                 if settings.DEBUG_MODE:
-                    channel_query = 'SELECT lower(name) FROM channels'
-                    channels_from_db = set(f'{row[0]}' for row in self.query(channel_query))
                     await self.message(conversation,
                                        f"(DEBUG) Should be in the following channels: "
-                                       f"{str(list(channels_from_db))}")
+                                       f"{str(self.channel_list)}")
         elif split_message[0] == 'announce':
             if await self.is_authorized(sender, 0):
                 announcement = ' '.join(split_message[1:])
