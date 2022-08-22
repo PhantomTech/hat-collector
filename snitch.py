@@ -6,6 +6,7 @@ import asyncio
 import collections
 import json
 import logging
+import random
 import re
 import sqlite3
 import sre_constants
@@ -33,6 +34,12 @@ WIKI_ALIAS: Dict[str, str] = {
 }
 AUTHORIZED_RE = re.compile(fr'{"|".join(settings.AUTHORIZED_USERS)}')
 TRUSTED_RE = re.compile(fr'{"|".join(settings.TRUSTED_USERS)}')
+HAT_COLLECTING_MESSAGES = (
+    'Any stewards taking off-wiki permission requests?',
+    'Do you need to be an admin before an RfB?',
+    'I\'m taking a break from IRC to focus on my RfA, '
+    'the sooner that passes the sooner I\'ll be back...',
+)
 
 Rule = collections.namedtuple('Rule', 'wiki, type, pattern, channel, ignore')
 
@@ -414,6 +421,13 @@ class ReportBot(BotClient):
                     self.query('DELETE FROM channels WHERE lower(name)=:channel',
                                {'channel': split_message[1].lower()})
                     await self.sync_channels()
+        elif split_message[0] == 'hatcollect':
+            if await self.is_authorized(sender, 1) and is_channel_message:
+                if self.has_flood_mode(message_target):
+                    await self.message(message_target, random.choice(HAT_COLLECTING_MESSAGES))
+                else:
+                    await self.hat_collect(message_target, reason='I need voice or op in the channel '
+                                                                  'to use this command.')
         elif split_message[0] == 'help':
             await self.message(message_target,
                                '!(relay|drop|ignore|unignore|list|listflood|join|part|quit)')
