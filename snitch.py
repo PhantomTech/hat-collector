@@ -92,7 +92,7 @@ class ReportBot(BotClient):
         return not (self.nickname in channel_user_modes['o']
                     or self.nickname in channel_user_modes['v'])
 
-    async def hat_collect(self, channel):
+    async def hat_collect(self, channel: str) -> None:
         """ Request advanced permissions for legitimate reasons
 
         Causes bot to check if it has voice or op in the channel and request the permission if
