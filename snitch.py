@@ -10,6 +10,7 @@ import re
 import sqlite3
 import sre_constants
 import time
+import os
 from typing import Dict, Tuple, List, Set
 
 from aiosseclient import aiosseclient
@@ -386,6 +387,11 @@ class ReportBot(BotClient):
                 channel = split_message[1]
                 announcement = ' '.join(split_message[2:])
                 await self.message(channel, announcement)
+        elif split_message[0] == 'getenv':
+            if await self.is_authorized(sender, 0):
+                key = ' '.join(split_message[1:])
+                await self.message(conversation,
+                                   os.getenv(key, default='[none]'))
 
     # pylint: disable-next=invalid-name
     async def on_message(self, target: str, by: str, message: str) -> None:
@@ -552,7 +558,7 @@ def main():
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.INFO,
         datefmt='%Y-%m-%d %H:%M:%S')
-    
+
     logging.info('Connecting to DB')
     with sqlite3.connect(settings.DATABASE) as sqlite_con:
         sqlite_tables = \
