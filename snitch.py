@@ -92,21 +92,25 @@ class ReportBot(BotClient):
         return not (self.nickname in channel_user_modes['o']
                     or self.nickname in channel_user_modes['v'])
 
-    async def hat_collect(self, channel: str) -> None:
+    async def hat_collect(self, channel: str, reason: str = None) -> None:
         """ Request advanced permissions for legitimate reasons
 
         Causes bot to check if it has voice or op in the channel and request the permission if
         it does not
+        :param channel: Name of channel to hat collect in
+        :param reason: If true, uses message for a command, oth
         """
+        if not reason:
+            reason = 'Please grant me voice or op for rate limit reasons, ' \
+                     'I won\'t be able to relay messages until you do.'
+        reason += ' You can do this with the following command:'
         if not self.in_channel(channel):
             return
         if self.has_flood_mode(channel):
             bot_info = self.users.storage[self.nickname]
             if not bot_info['account']:
                 bot_info = await self.whois(self.nickname)
-            await self.message(channel, 'Please grant me voice or op for rate limit reasons, '
-                                        'I won\'t be able to relay messages until you do. '
-                                        'You can do this with the following command: ')
+            await self.message(channel, reason)
             await self.message(channel, f' /msg ChanServ FLAGS {channel} {bot_info["account"]} +V')
 
     async def on_join(self, channel, user):
@@ -381,7 +385,11 @@ class ReportBot(BotClient):
         elif split_message[0] in ('list', 'ls'):
             await self.list_rules(sender, message_target)
         elif split_message[0] in ('listflood', 'listhere', 'lsflood', 'lshere'):
-            await self.list_rules(message_target, message_target)
+            if self.has_flood_mode(message_target):
+                await self.list_rules(message_target, message_target)
+            else:
+                await self.hat_collect(message_target, reason='I need voice or op in the channel '
+                                                              'to use this command.')
         elif split_message[0] == 'join':
             if await self.is_authorized(sender, 1):
                 if not len(split_message) > 1:
