@@ -117,6 +117,7 @@ class ReportBot(BotClient):
             bot_info = self.users.storage[self.nickname]
             if not bot_info['account']:
                 bot_info = await self.whois(self.nickname)
+            logging.info(f'Hat collecting in {channel}')
             await self.message(channel, reason)
             await self.message(channel, f' /msg ChanServ FLAGS {channel} {bot_info["account"]} +V')
 
