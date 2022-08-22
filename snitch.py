@@ -86,7 +86,7 @@ class ReportBot(BotClient):
         """ Syncs list of rules for the bot
         """
         logging.info('Syncing rules')
-        query = 'SELECT wiki, type, pattern, channel, ignore FROM rules ORDER BY ignore DESC'
+        query = 'SELECT wiki, type, pattern, lower(channel), ignore FROM rules ORDER BY ignore DESC'
         self.rule_list = []
         for row in self.query(query):
             if row[0] in WIKI_ALIAS:
@@ -164,7 +164,7 @@ class ReportBot(BotClient):
         exists = len(
             self.query('SELECT * FROM rules '
                        'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
-                       'AND channel=:channel AND ignore=:ignore',
+                       'AND lower(channel)=:channel AND ignore=:ignore',
                        {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel,
                         'ignore': ignore})) > 0
         if remove:
@@ -172,7 +172,7 @@ class ReportBot(BotClient):
                 self.query(
                     'DELETE FROM rules '
                     'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
-                    'AND channel=:channel AND ignore=:ignore',
+                    'AND lower(channel)=:channel AND ignore=:ignore',
                     {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel,
                      'ignore': ignore})
                 self.sync_rules()
@@ -266,7 +266,7 @@ class ReportBot(BotClient):
         :param for_channel: channel to get rule list for
         """
         rules = [Rule(*row) for row in
-                 self.query('SELECT * FROM rules WHERE channel=:channel '
+                 self.query('SELECT * FROM rules WHERE lower(channel)=:channel '
                             'ORDER BY wiki, ignore DESC, type',
                             {'channel': for_channel})]
         await self.message(message_target, f'Rules for {for_channel}')
