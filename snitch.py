@@ -407,7 +407,7 @@ class ReportBot(BotClient):
         await super().on_channel_message(target, by, message)
         # logging.info(f'{by} -> {target}: {message}')
 
-        await self.process_command(target, by, message)
+        await self.process_command(target, by.lower(), message.lower())
 
     async def handle_event_stream(self, data: Dict) -> None:
         """ Called when the bot receives a message from the eventstream
