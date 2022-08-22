@@ -548,8 +548,11 @@ class ReportBot(BotClient):
 def main():
     """ Setup DB if needed then start bot
     """
-    logging.basicConfig(level=logging.INFO)
-
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.INFO,
+        datefmt='%Y-%m-%d %H:%M:%S')
+    
     logging.info('Connecting to DB')
     with sqlite3.connect(settings.DATABASE) as sqlite_con:
         sqlite_tables = \
