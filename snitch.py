@@ -96,8 +96,8 @@ class ReportBot(BotClient):
         """
         channel = channel.lower()
         channel_user_modes = self.channels.storage[channel]['modes']
-        return not (self.nickname in channel_user_modes['o']
-                    or self.nickname in channel_user_modes['v'])
+        return self.nickname in channel_user_modes['o'] \
+               or self.nickname in channel_user_modes['v']
 
     async def hat_collect(self, channel: str, reason: str = None) -> None:
         """ Request advanced permissions for legitimate reasons
@@ -113,7 +113,7 @@ class ReportBot(BotClient):
         reason += ' You can do this with the following command:'
         if not self.in_channel(channel):
             return
-        if self.has_flood_mode(channel):
+        if not self.has_flood_mode(channel):
             bot_info = self.users.storage[self.nickname]
             if not bot_info['account']:
                 bot_info = await self.whois(self.nickname)
@@ -286,7 +286,7 @@ class ReportBot(BotClient):
                 if channel not in self.channel_list:
                     logging.error(f'Tried to send a message to a channel bot isn\'t in: {channel}')
                 return
-        if self.has_flood_mode(channel):
+        if not self.has_flood_mode(channel):
             logging.warning(f'Tried to relay to channel without voice or op: {channel}')
             return
         if 'page' in diff:
