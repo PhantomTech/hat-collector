@@ -288,6 +288,8 @@ class ReportBot(BotClient):
         # pylint: disable=too-many-branches,too-many-statements
         if not message.startswith('!'):
             return
+        
+        message = message.rstrip()
 
         is_channel_message = self.is_channel(message_target)
         conversation = message_target if is_channel_message else sender
