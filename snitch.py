@@ -368,28 +368,33 @@ class ReportBot(BotClient):
                 response.strip('\n')
                 await self.message(conversation, response)
         elif split_message[0] in ('stalk', 'watch', 'match', 'relay'):
-            await self.message(conversation,
-                               await self.update_rules(message_target, split_message))
+            if is_channel_message:
+                await self.message(conversation,
+                                   await self.update_rules(message_target, split_message))
         elif split_message[0] in ('ignore', 'filter'):
-            await self.message(conversation,
-                               await self.update_rules(message_target, split_message,
-                                                       ignore=True))
+            if is_channel_message:
+                await self.message(conversation,
+                                   await self.update_rules(message_target, split_message,
+                                                           ignore=True))
         elif split_message[0] in ('unstalk', 'unwatch', 'unmatch', 'unrelay', 'drop'):
-            await self.message(conversation,
-                               await self.update_rules(message_target, split_message,
-                                                       remove=True))
+            if is_channel_message:
+                await self.message(conversation,
+                                   await self.update_rules(message_target, split_message,
+                                                           remove=True))
         elif split_message[0] in ('unignore', 'dropignore', 'unfilter', 'dropfilter'):
-            await self.message(conversation,
-                               await self.update_rules(message_target, split_message,
-                                                       ignore=True, remove=True))
+            if is_channel_message:
+                await self.message(conversation,
+                                   await self.update_rules(message_target, split_message,
+                                                           ignore=True, remove=True))
         elif split_message[0] in ('list', 'ls'):
             await self.list_rules(sender, message_target)
         elif split_message[0] in ('listflood', 'listhere', 'lsflood', 'lshere'):
-            if self.has_flood_mode(message_target):
-                await self.list_rules(message_target, message_target)
-            else:
-                await self.hat_collect(message_target, reason='I need voice or op in the channel '
-                                                              'to use this command.')
+            if is_channel_message:
+                if self.has_flood_mode(message_target):
+                    await self.list_rules(message_target, message_target)
+                else:
+                    await self.hat_collect(message_target, reason='I need voice or op in the channel '
+                                                                  'to use this command.')
         elif split_message[0] == 'join':
             if await self.is_authorized(sender, 1):
                 if not len(split_message) > 1:
