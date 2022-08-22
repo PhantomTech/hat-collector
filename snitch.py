@@ -82,6 +82,34 @@ class ReportBot(BotClient):
         # pylint: disable-next=expression-not-assigned
         [await self.part(channel) for channel in (self.channels.keys() - self.channel_list)]
 
+    async def hat_collect(self, channel):
+        """ Request advanced permissions for legitimate reasons
+
+        Causes bot to check if it has voice or op in the channel and request the permission if
+        it does not
+        """
+        if not self.in_channel(channel):
+            return
+        channel = channel.lower()
+        channel_user_modes = self.channels.storage[channel]['modes']
+        if not (self.nickname in channel_user_modes['o']
+                or self.nickname in channel_user_modes['v']):
+            bot_info = self.users.storage[self.nickname]
+            if not bot_info['account']:
+                bot_info = await self.whois(self.nickname)
+            await self.message(channel, 'Please grant me voice or op for rate limit reasons, '
+                                        'I won\'t be able to relay messages until you do. '
+                                        'You can do this with the following command: ')
+            await self.message(channel, f' /msg ChanServ FLAGS {channel} {bot_info["account"]} +V')
+
+    async def on_join(self, channel, user):
+        """ Callback called when a user, possibly the client, has joined the channel. """
+        await super().on_join(channel, user)
+        if user != self.nickname:
+            return
+        await asyncio.sleep(5)
+        await self.hat_collect(channel)
+
     def sync_rules(self) -> None:
         """ Syncs list of rules for the bot
         """
@@ -240,6 +268,10 @@ class ReportBot(BotClient):
                 if channel not in self.channel_list:
                     logging.error(f'Tried to send a message to a channel bot isn\'t in: {channel}')
                 return
+        if not (self.nickname in self.channels.storage[channel]['modes']['o']
+                or self.nickname in self.channels.storage[channel]['modes']['v']):
+            logging.warning(f'Tried to relay to channel without voice or op: {channel}')
+            return
         if 'page' in diff:
             if not diff['summary']:
                 diff['summary'] = '[no summary]'
