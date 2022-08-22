@@ -211,16 +211,24 @@ class ReportBot(BotClient):
             self.query('SELECT * FROM rules '
                        'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
                        'AND lower(channel)=:channel AND ignore=:ignore',
-                       {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel.lower(),
-                        'ignore': ignore})) > 0
+                       {'wiki': wiki,
+                        'type': rule_type,
+                        'pattern': pattern,
+                        'channel': channel.lower(),
+                        'ignore': ignore}
+                       )) > 0
         if remove:
             if exists:
                 self.query(
                     'DELETE FROM rules '
                     'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
                     'AND lower(channel)=:channel AND ignore=:ignore',
-                    {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel.lower(),
-                     'ignore': ignore})
+                    {'wiki': wiki,
+                     'type': rule_type,
+                     'pattern': pattern,
+                     'channel': channel.lower(),
+                     'ignore': ignore}
+                )
                 self.sync_rules()
                 return 'Rule deleted'
             return 'No such rule'
@@ -337,7 +345,7 @@ class ReportBot(BotClient):
         # pylint: disable=too-many-branches,too-many-statements
         if not message.startswith('!'):
             return
-        
+
         message = message.rstrip()
 
         is_channel_message = self.is_channel(message_target)
@@ -400,8 +408,9 @@ class ReportBot(BotClient):
                 if self.has_flood_mode(message_target):
                     await self.list_rules(message_target, message_target)
                 else:
-                    await self.hat_collect(message_target, reason='I need voice or op in the channel '
-                                                                  'to use this command.')
+                    await self.hat_collect(message_target,
+                                           reason='I need voice or op in the channel '
+                                                  'to use this command.')
         elif split_message[0] == 'join':
             if await self.is_authorized(sender, 1):
                 if not len(split_message) > 1:
@@ -426,8 +435,9 @@ class ReportBot(BotClient):
                 if self.has_flood_mode(message_target):
                     await self.message(message_target, random.choice(HAT_COLLECTING_MESSAGES))
                 else:
-                    await self.hat_collect(message_target, reason='I need voice or op in the channel '
-                                                                  'to use this command.')
+                    await self.hat_collect(message_target,
+                                           reason='I need voice or op in the channel '
+                                                  'to use this command.')
         elif split_message[0] == 'help':
             await self.message(message_target,
                                '!(relay|drop|ignore|unignore|list|listflood|join|part|quit)')
@@ -487,7 +497,7 @@ class ReportBot(BotClient):
 
         wiki = '.'.join(data['server_name'].split('.')[:-1])
         if data['type'] not in ('edit', 'new', 'log'):
-            if data['type'] not in ('categorize', '142'): # '142' is for Flow edits
+            if data['type'] not in ('categorize', '142'):  # '142' is for Flow edits
                 logging.info(f'Unknown type {data["type"]}')
             return
         diff = {
