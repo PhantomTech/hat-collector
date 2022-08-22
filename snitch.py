@@ -165,7 +165,7 @@ class ReportBot(BotClient):
             self.query('SELECT * FROM rules '
                        'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
                        'AND lower(channel)=:channel AND ignore=:ignore',
-                       {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel,
+                       {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel.lower(),
                         'ignore': ignore})) > 0
         if remove:
             if exists:
@@ -173,7 +173,7 @@ class ReportBot(BotClient):
                     'DELETE FROM rules '
                     'WHERE wiki=:wiki AND type=:type AND pattern=:pattern '
                     'AND lower(channel)=:channel AND ignore=:ignore',
-                    {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel,
+                    {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel.lower(),
                      'ignore': ignore})
                 self.sync_rules()
                 return 'Rule deleted'
@@ -182,7 +182,7 @@ class ReportBot(BotClient):
             return 'Rule already exists'
         self.query(
             'INSERT OR REPLACE INTO rules VALUES (:wiki,:type,:pattern,:channel,:ignore)',
-            {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel,
+            {'wiki': wiki, 'type': rule_type, 'pattern': pattern, 'channel': channel.lower(),
              'ignore': ignore})
         self.sync_rules()
         return 'Rule added'
@@ -268,7 +268,7 @@ class ReportBot(BotClient):
         rules = [Rule(*row) for row in
                  self.query('SELECT * FROM rules WHERE lower(channel)=:channel '
                             'ORDER BY wiki, ignore DESC, type',
-                            {'channel': for_channel})]
+                            {'channel': for_channel.lower()})]
         await self.message(message_target, f'Rules for {for_channel}')
         # pylint: disable-next=expression-not-assigned
         [await self.message(message_target,
