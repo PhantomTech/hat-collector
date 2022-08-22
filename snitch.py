@@ -82,6 +82,16 @@ class ReportBot(BotClient):
         # pylint: disable-next=expression-not-assigned
         [await self.part(channel) for channel in (self.channels.keys() - self.channel_list)]
 
+    def has_flood_mode(self, channel: str) -> bool:
+        """ Check if bot has a mode that allows faster message sending
+
+        :param channel: Name of channel to check in
+        """
+        channel = channel.lower()
+        channel_user_modes = self.channels.storage[channel]['modes']
+        return not (self.nickname in channel_user_modes['o']
+                    or self.nickname in channel_user_modes['v'])
+
     async def hat_collect(self, channel):
         """ Request advanced permissions for legitimate reasons
 
@@ -90,10 +100,7 @@ class ReportBot(BotClient):
         """
         if not self.in_channel(channel):
             return
-        channel = channel.lower()
-        channel_user_modes = self.channels.storage[channel]['modes']
-        if not (self.nickname in channel_user_modes['o']
-                or self.nickname in channel_user_modes['v']):
+        if self.has_flood_mode(channel):
             bot_info = self.users.storage[self.nickname]
             if not bot_info['account']:
                 bot_info = await self.whois(self.nickname)
@@ -268,8 +275,7 @@ class ReportBot(BotClient):
                 if channel not in self.channel_list:
                     logging.error(f'Tried to send a message to a channel bot isn\'t in: {channel}')
                 return
-        if not (self.nickname in self.channels.storage[channel]['modes']['o']
-                or self.nickname in self.channels.storage[channel]['modes']['v']):
+        if self.has_flood_mode(channel):
             logging.warning(f'Tried to relay to channel without voice or op: {channel}')
             return
         if 'page' in diff:
